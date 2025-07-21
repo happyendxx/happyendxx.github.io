@@ -1,0 +1,1021 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能会议预约系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    
+    <!-- Tailwind 配置 - 改为紫色主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7B2CBF', // 主紫色
+                        secondary: '#A78BFA', // 浅紫色
+                        accent: '#C084FC', // 亮紫色
+                        success: '#10B981', // 成功绿色
+                        warning: '#F59E0B', // 警告黄色
+                        danger: '#EF4444', // 危险红色
+                        dark: '#1F2937',
+                        'gray-light': '#F3F4F6',
+                        'gray-medium': '#D1D5DB'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .bg-gradient-primary {
+                background: linear-gradient(135deg, #7B2CBF 0%, #5B21B6 100%);
+            }
+            .toast-animation {
+                animation: toast 0.3s ease-out forwards, toast 0.3s ease-in reverse forwards 3s;
+            }
+            @keyframes toast {
+                from { transform: translateY(-100px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary text-white p-2 rounded-lg">
+                    <i class="fa fa-calendar-check-o text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold text-primary hidden sm:block">智能会议预约系统</h1>
+                <h1 class="text-xl font-bold text-primary sm:hidden">会议预约</h1>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#rooms" class="font-medium hover:text-primary transition-colors">会议室</a>
+                <a href="#reserve" class="font-medium hover:text-primary transition-colors">预约会议</a>
+                <a href="#queries" class="font-medium hover:text-primary transition-colors">查询预约</a>
+                <a href="#statistics" class="font-medium hover:text-primary transition-colors">使用统计</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-2 bg-gray-light px-3 py-1.5 rounded-full">
+                    <i class="fa fa-user-circle-o text-gray-500"></i>
+                    <span class="text-sm">管理员</span>
+                </div>
+                <button class="md:hidden text-dark" id="mobile-menu-button">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white border-t" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#rooms" class="py-2 font-medium hover:text-primary transition-colors">会议室</a>
+                <a href="#reserve" class="py-2 font-medium hover:text-primary transition-colors">预约会议</a>
+                <a href="#queries" class="py-2 font-medium hover:text-primary transition-colors">查询预约</a>
+                <a href="#statistics" class="py-2 font-medium hover:text-primary transition-colors">使用统计</a>
+                <div class="flex items-center space-x-2 py-2 border-t">
+                    <i class="fa fa-user-circle-o text-gray-500"></i>
+                    <span>管理员</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6 md:py-8">
+        <!-- 欢迎区域 -->
+        <section class="mb-8 bg-gradient-primary rounded-2xl p-6 md:p-8 text-white shadow-lg">
+            <div class="max-w-3xl">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-3">高效管理会议资源</h2>
+                <p class="text-white/90 mb-6 max-w-xl">轻松预约会议室，避免时间冲突，提高会议效率，让每一次沟通都更有价值。</p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#reserve" class="bg-white text-primary px-5 py-2.5 rounded-lg font-medium hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg">
+                        <i class="fa fa-plus-circle mr-2"></i>立即预约
+                    </a>
+                    <a href="#rooms" class="bg-white/20 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-opacity-30 transition-all">
+                        <i class="fa fa-building-o mr-2"></i>查看会议室
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 会议室列表 - 增加了培训室，取消了位置显示 -->
+        <section id="rooms" class="mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">会议室列表</h2>
+                <button id="add-room-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center hover:bg-primary/90 transition-all shadow-sm">
+                    <i class="fa fa-plus mr-2"></i>添加会议室
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 会议室卡片 1 -->
+                <div class="bg-white rounded-lg rounded-xl shadow-card overflow hover:shadow-lg transition-all-300 overflow-hidden">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1">一号会议室</h3>
+                                <p class="text-gray-500 text-sm">ID: RM-001</p>
+                            </div>
+                            <span class="bg-success/10 text-success text-xs px-2 py-1 rounded-full">可预约</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-users w-5 text-gray-400"></i>
+                                <span>容量: 10人</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-wifi w-5 text-gray-400"></i>
+                                <span>设备: 电视, 白板, 视频会议</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">今日已预约: 2次</span>
+                            <button class="text-primary hover:text-primary/80 font-medium text-sm flex items-center">
+                                查看详情 <i class="fa fa-angle-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 会议室卡片 2 -->
+                <div class="bg-white rounded-xl shadow-card hover:shadow-lg transition-all-300 overflow-hidden">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1">二号会议室</h3>
+                                <p class="text-gray-500 text-sm">ID: RM-002</p>
+                            </div>
+                            <span class="bg-success/10 text-success text-xs px-2 py-1 rounded-full">可预约</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-users w-5 text-gray-400"></i>
+                                <span>容量: 8人</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-wifi w-5 text-gray-400"></i>
+                                <span>设备: 投影仪, 白板，视频会议</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">今日已预约: 1次</span>
+                            <button class="text-primary hover:text-primary/80 font-medium text-sm flex items-center">
+                                查看详情 <i class="fa fa-angle-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 会议室卡片 3 -->
+                <div class="bg-white rounded-xl shadow-card hover:shadow-lg transition-all-300 overflow-hidden">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1">三号会议室</h3>
+                                <p class="text-gray-500 text-sm">ID: RM-003</p>
+                            </div>
+                            <span class="bg-warning/10 text-warning text-xs px-2 py-1 rounded-full">可预约</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-users w-5 text-gray-400"></i>
+                                <span>容量: 8人</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-wifi w-5 text-gray-400"></i>
+                                <span>设备: 投影仪, 白板，视频会议</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">今日已预约: 3次</span>
+                            <button class="text-primary hover:text-primary/80 font-medium text-sm flex items-center">
+                                查看详情 <i class="fa fa-angle-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新增：培训室 -->
+                <div class="bg-white rounded-xl shadow-card hover:shadow-lg transition-all-300 overflow-hidden border-l-4 border-primary">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1">培训室</h3>
+                                <p class="text-gray-500 text-sm">ID: TM-001</p>
+                            </div>
+                            <span class="bg-success/10 text-success text-xs px-2 py-1 rounded-full">可预约</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-users w-5 text-gray-400"></i>
+                                <span>容量: 30人</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 text-sm">
+                                <i class="fa fa-wifi w-5 text-gray-400"></i>
+                                <span>设备: 投影仪, 音响, 白板, 视频会议</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">今日已预约: 0次</span>
+                            <button class="text-primary hover:text-primary/80 font-medium text-sm flex items-center">
+                                查看详情 <i class="fa fa-angle-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 预约会议 -->
+        <section id="reserve" class="mb-10">
+            <h2 class="text-2xl font-bold mb-6">预约会议</h2>
+            
+            <div class="bg-white rounded-xl shadow-card p-6 md:p-8">
+                <form id="reservation-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="room-select">
+                                选择会议室 <span class="text-danger">*</span>
+                            </label>
+                            <div class="relative">
+                                <select id="room-select" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none">
+                                    <option value="">请选择会议室</option>
+                                    <option value="1">一号会议室 (RM-001) - 10人</option>
+                                    <option value="2">二号会议室 (RM-002) - 8人</option>
+                                    <option value="3">三号会议室 (RM-003) - 8人</option>
+                                    <option value="4">培训室 (TM-001) - 50人</option> <!-- 新增培训室选项 -->
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <i class="fa fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="meeting-date">
+                                会议日期 <span class="text-danger">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="date" id="meeting-date" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <i class="fa fa-calendar text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="start-time">
+                                开始时间 <span class="text-danger">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="time" id="start-time" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <i class="fa fa-clock-o text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="end-time">
+                                结束时间 <span class="text-danger">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="time" id="end-time" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <i class="fa fa-clock-o text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="meeting-title">
+                                会议标题 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="meeting-title" placeholder="请输入会议标题" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2" for="meeting-organizer">
+                                预约人 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="meeting-organizer" placeholder="请输入您的姓名" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="meeting-description">
+                            会议描述
+                        </label>
+                        <textarea id="meeting-description" rows="3" placeholder="请输入会议描述（可选）" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">
+                            所需设备
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>投影仪</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>视频会议</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>白板</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>麦克风</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4 flex justify-end">
+                        <button type="button" class="px-6 py-2.5 mr-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                            取消
+                        </button>
+                        <button type="submit" class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-sm hover:shadow">
+                            确认预约
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 查询预约 -->
+        <section id="queries" class="mb-10">
+            <h2 class="text-2xl font-bold mb-6">查询预约</h2>
+            
+            <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="query-room">
+                            会议室
+                        </label>
+                        <select id="query-room" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none text-sm">
+                            <option value="">全部会议室</option>
+                            <option value="1">一号会议室 (RM-001)</option>
+                            <option value="2">二号会议室 (RM-002)</option>
+                            <option value="3">三号会议室 (RM-003)</option>
+                            <option value="4">培训室 (TM-001)</option> <!-- 新增培训室选项 -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="query-date">
+                            日期
+                        </label>
+                        <input type="date" id="query-date" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="query-user">
+                            预约人
+                        </label>
+                        <input type="text" id="query-user" placeholder="输入预约人姓名" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm">
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button id="query-btn" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all text-sm">
+                            <i class="fa fa-search mr-1"></i> 查询
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 预约列表 -->
+            <div class="bg-white rounded-xl shadow-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    预约ID
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    会议室
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    预约人
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    日期
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    时间
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    会议标题
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    状态
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- 预约记录 1 -->
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    RES-1001
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    一号会议室 (RM-001)
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    张三
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2023-06-15
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    09:30 - 10:30
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    产品周会
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success">
+                                        已确认
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">编辑</button>
+                                    <button class="text-danger hover:text-danger/80 cancel-reservation">取消</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- 预约记录 2 -->
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    RES-1002
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    二号会议室 (RM-002)
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    李四
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2023-06-15
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    14:00 - 15:00
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    技术评审会
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success">
+                                        已确认
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">编辑</button>
+                                    <button class="text-danger hover:text-danger/80 cancel-reservation">取消</button>
+                                </td>
+                            </tr>
+                            
+                            <!-- 预约记录 3 -->
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    RES-1003
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    培训室 (TM-001) <!-- 新增培训室预约记录 -->
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    王五
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    2023-06-16
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    10:00 - 12:00
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    新员工培训
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success/10 text-success">
+                                        已确认
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">编辑</button>
+                                    <button class="text-danger hover:text-danger/80 cancel-reservation">取消</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            上一页
+                        </a>
+                        <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            下一页
+                        </a>
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                显示第 <span class="font-medium">1</span> 到 <span class="font-medium">3</span> 条，共 <span class="font-medium">12</span> 条记录
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">上一页</span>
+                                    <i class="fa fa-chevron-left text-xs"></i>
+                                </a>
+                                <a href="#" aria-current="page" class="z-10 bg-primary text-white relative inline-flex items-center px-4 py-2 border border-primary text-sm font-medium">
+                                    1
+                                </a>
+                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    2
+                                </a>
+                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    3
+                                </a>
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                    ...
+                                </span>
+                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    4
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">下一页</span>
+                                    <i class="fa fa-chevron-right text-xs"></i>
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 使用统计 -->
+        <section id="statistics" class="mb-10">
+            <h2 class="text-2xl font-bold mb-6">会议室使用统计</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 统计卡片 -->
+                <div class="bg-white rounded-xl shadow-card p-6">
+                    <h3 class="text-lg font-semibold mb-4">本月预约统计</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">一号会议室</span>
+                                <span class="font-medium">24次</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">二号会议室</span>
+                                <span class="font-medium">18次</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-secondary h-2 rounded-full" style="width: 60%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">培训室</span>
+                                <span class="font-medium">12次</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-accent h-2 rounded-full" style="width: 40%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表 -->
+                <div class="bg-white rounded-xl shadow-card p-6 lg:col-span-2">
+                    <h3 class="text-lg font-semibold mb-4">会议室使用趋势</h3>
+                    <div class="h-64">
+                        <canvas id="usage-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 模态框：添加会议室 -->
+    <div id="add-room-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">添加新会议室</h3>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-500">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="add-room-form" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="room-name">
+                            会议室名称 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="room-name" placeholder="请输入会议室名称" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="room-capacity">
+                            容量（人数）<span class="text-danger">*</span>
+                        </label>
+                        <input type="number" id="room-capacity" min="1" placeholder="请输入容量" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">
+                            设备
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>投影仪</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>视频会议</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>白板</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 transition-all">
+                                <input type="checkbox" class="form-checkbox text-primary h-4 w-4 mr-2">
+                                <span>麦克风</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t flex justify-end space-x-3">
+                <button id="cancel-add-room" class="px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                    取消
+                </button>
+                <button id="confirm-add-room" class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
+                    确认添加
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：成功提示 - 增强版 -->
+    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center transform transition-all scale-100">
+            <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa fa-check text-2xl text-success"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">操作成功</h3>
+            <p class="text-gray-600 mb-6" id="success-message">预约已成功提交</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="close-success-modal" class="flex-1 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+                    返回
+                </button>
+                <button id="view-reservations" class="flex-1 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
+                    查看我的预约
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 顶部通知提示 - 新增 -->
+    <div id="toast-notification" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden toast-animation flex items-center">
+        <i class="fa fa-check-circle mr-2"></i>
+        <span id="toast-message">预约成功！</span>
+    </div>
+
+    <!-- 模态框：取消预约确认 -->
+    <div id="cancel-confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all">
+            <h3 class="text-xl font-bold mb-2">取消预约</h3>
+            <p class="text-gray-600 mb-6">您确定要取消此预约吗？此操作不可撤销。</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-cancel" class="px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                    取消
+                </button>
+                <button id="confirm-cancel" class="px-5 py-2 bg-danger text-white rounded-lg hover:bg-danger/90 transition-all">
+                    确认取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化日期选择器为今天
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('meeting-date').value = today;
+            document.getElementById('query-date').value = today;
+            
+            // 初始化图表
+            initChart();
+            
+            // 移动端菜单切换
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // 添加会议室模态框
+            const addRoomBtn = document.getElementById('add-room-btn');
+            const addRoomModal = document.getElementById('add-room-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const cancelAddRoom = document.getElementById('cancel-add-room');
+            
+            addRoomBtn.addEventListener('click', function() {
+                addRoomModal.classList.remove('hidden');
+            });
+            
+            function closeModal() {
+                addRoomModal.classList.add('hidden');
+            }
+            
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelAddRoom.addEventListener('click', closeModal);
+            
+            // 点击模态框外部关闭
+            addRoomModal.addEventListener('click', function(e) {
+                if (e.target === addRoomModal) {
+                    closeModal();
+                }
+            });
+            
+            // 确认添加会议室
+            const confirmAddRoom = document.getElementById('confirm-add-room');
+            confirmAddRoom.addEventListener('click', function() {
+                const roomName = document.getElementById('room-name').value;
+                const roomCapacity = document.getElementById('room-capacity').value;
+                
+                if (!roomName || !roomCapacity) {
+                    alert('请填写所有必填字段');
+                    return;
+                }
+                
+                // 这里只是模拟提交，实际项目中需要发送到服务器
+                closeModal();
+                document.getElementById('add-room-form').reset();
+                
+                // 显示成功提示
+                showSuccessMessage('会议室添加成功');
+            });
+            
+            // 预约表单提交 - 增强预约成功提示
+            const reservationForm = document.getElementById('reservation-form');
+            reservationForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const roomSelect = document.getElementById('room-select').value;
+                const meetingDate = document.getElementById('meeting-date').value;
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                const meetingTitle = document.getElementById('meeting-title').value;
+                const meetingOrganizer = document.getElementById('meeting-organizer').value;
+                
+                if (!roomSelect || !meetingDate || !startTime || !endTime || !meetingTitle || !meetingOrganizer) {
+                    alert('请填写所有必填字段');
+                    return;
+                }
+                
+                // 检查时间是否合理
+                if (startTime >= endTime) {
+                    alert('结束时间必须晚于开始时间');
+                    return;
+                }
+                
+                // 获取会议室名称
+                const roomSelectElement = document.getElementById('room-select');
+                const roomName = roomSelectElement.options[roomSelectElement.selectedIndex].text;
+                
+                // 这里只是模拟提交，实际项目中需要发送到服务器
+                reservationForm.reset();
+                document.getElementById('meeting-date').value = today;
+                
+                // 显示成功提示 - 包含会议室信息
+                showSuccessMessage(`已成功预约 ${roomName}，时间：${meetingDate} ${startTime}-${endTime}`);
+                
+                // 同时显示顶部通知
+                showToastNotification('会议预约成功！');
+            });
+            
+            // 关闭成功提示
+            document.getElementById('close-success-modal').addEventListener('click', function() {
+                document.getElementById('success-modal').classList.add('hidden');
+            });
+            
+            // 查看我的预约按钮
+            document.getElementById('view-reservations').addEventListener('click', function() {
+                document.getElementById('success-modal').classList.add('hidden');
+                // 滚动到查询预约区域
+                document.querySelector('#queries').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+            
+            // 取消预约确认
+            const cancelButtons = document.querySelectorAll('.cancel-reservation');
+            const cancelConfirmModal = document.getElementById('cancel-confirm-modal');
+            
+            cancelButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    cancelConfirmModal.classList.remove('hidden');
+                });
+            });
+            
+            // 关闭取消确认
+            document.getElementById('cancel-cancel').addEventListener('click', function() {
+                cancelConfirmModal.classList.add('hidden');
+            });
+            
+            // 确认取消预约
+            document.getElementById('confirm-cancel').addEventListener('click', function() {
+                cancelConfirmModal.classList.add('hidden');
+                
+                // 显示成功提示
+                showSuccessMessage('预约已取消');
+                showToastNotification('预约已取消！');
+            });
+            
+            // 点击取消确认模态框外部关闭
+            cancelConfirmModal.addEventListener('click', function(e) {
+                if (e.target === cancelConfirmModal) {
+                    cancelConfirmModal.classList.add('hidden');
+                }
+            });
+            
+            // 查询按钮
+            document.getElementById('query-btn').addEventListener('click', function() {
+                // 这里只是模拟查询，实际项目中需要发送到服务器
+                showToastNotification('查询成功，显示结果');
+            });
+            
+            // 滚动时导航栏效果
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('header');
+                if (window.scrollY > 10) {
+                    header.classList.add('py-2', 'shadow');
+                    header.classList.remove('py-3', 'shadow-sm');
+                } else {
+                    header.classList.add('py-3', 'shadow-sm');
+                    header.classList.remove('py-2', 'shadow');
+                }
+            });
+            
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                        
+                        // 关闭移动菜单
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // 显示成功消息
+            function showSuccessMessage(message) {
+                document.getElementById('success-message').textContent = message;
+                document.getElementById('success-modal').classList.remove('hidden');
+            }
+            
+            // 显示顶部通知
+            function showToastNotification(message) {
+                const toast = document.getElementById('toast-notification');
+                const toastMessage = document.getElementById('toast-message');
+                
+                toastMessage.textContent = message;
+                toast.classList.remove('hidden');
+                
+                // 重置动画
+                toast.classList.remove('toast-animation');
+                void toast.offsetWidth; // 触发重绘
+                toast.classList.add('toast-animation');
+                
+                // 3秒后隐藏
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 3000);
+            }
+        });
+        
+        // 初始化使用趋势图表 - 更新为紫色主题
+        function initChart() {
+            const ctx = document.getElementById('usage-chart').getContext('2d');
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'],
+                    datasets: [
+                        {
+                            label: '一号会议室',
+                            data: [3, 5, 4, 6, 8, 7, 4],
+                            borderColor: '#7B2CBF', // 主紫色
+                            backgroundColor: 'rgba(123, 44, 191, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '二号会议室',
+                            data: [2, 3, 5, 4, 3, 6, 5],
+                            borderColor: '#A78BFA', // 浅紫色
+                            backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '培训室', // 新增培训室数据
+                            data: [1, 2, 3, 2, 4, 3, 5],
+                            borderColor: '#C084FC', // 亮紫色
+                            backgroundColor: 'rgba(192, 132, 252, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '预约次数'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+
+    </body></html>
